@@ -256,7 +256,7 @@ class QA_GUI_tool(Frame):
         self.genLabeldata()
 
     def qapp(self):
-        os.chdir(os.path.dirname(os.getcwd()))
+        os.chdir(os.path.dirname(os.getcwd()+"/data"))
         frame = self.datahash[self.curr_image]
         frame["qaStatus"] = "approved"
         self.datahash[self.curr_image] = frame
@@ -267,7 +267,7 @@ class QA_GUI_tool(Frame):
         self.genLabeldata()
 
     def qdapp(self):
-        os.chdir(os.path.dirname(os.getcwd()))
+        os.chdir(os.path.dirname(os.getcwd()+"/data"))
         frame = self.datahash[self.curr_image]
         frame["qaStatus"] = "changesRequested"
         self.data["frames"][self.token]=frame
@@ -278,7 +278,7 @@ class QA_GUI_tool(Frame):
         self.genLabeldata()
 
     def togflag(self):
-        os.chdir(os.path.dirname(os.getcwd()))
+        os.chdir(os.path.dirname(os.getcwd()+"/data"))
         frame = self.datahash[self.curr_image]
         if frame['isFlagged'] == False:
             frame["isFlagged"] = True
@@ -293,7 +293,7 @@ class QA_GUI_tool(Frame):
 
 
     def togempty(self):
-        os.chdir(os.path.dirname(os.getcwd()))
+        os.chdir(os.path.dirname(os.getcwd()+"/data"))
         frame = self.datahash[self.curr_image]
         if frame['isEmpty'] == False:
             frame["isEmpty"] = True
