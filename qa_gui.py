@@ -34,9 +34,14 @@ class QA_GUI_tool(Frame):
         self.blank = Canvas(self.master,width=1200,height=70)
         self.nextb = ttk.Frame(self.master)
         self.prog_label = Label(self.navigate,text="")
-        self.select = Button(self.control, text="Select Directory", command = self.directory_select,bg='navy',fg='white')
+        self.menubar = Menubutton(self.control,text= "File", bg = "navy blue", fg = 'white',height=1,width=6,relief=RAISED,highlightthickness=2)
+        self.menubar.menu = Menu(self.menubar,tearoff=2)
+        self.menubar["menu"] = self.menubar.menu
+        self.menubar.menu.add_command(label="Select Directory",command =self.directory_select)
+        self.menubar.menu.add_command(label="Save Changes",command =self.save_changes)
+
         '''BUILD WIDGET'''
-        self.select.pack(side=LEFT)
+        self.menubar.pack(side=LEFT)
         self.control.pack(side=TOP,fill=X)
         self.prog_label.pack(side=BOTTOM,pady=(0,20))
         self.navigate.pack(side=BOTTOM, fill = X)
@@ -115,7 +120,7 @@ class QA_GUI_tool(Frame):
 
     def Check_status(self,keyword):
         try:
-            return self.datahash[self.curr_image][keyword]
+            return self.data["frames"][self.token][keyword]
         except:
             return 'No Entry'
 
@@ -154,12 +159,12 @@ class QA_GUI_tool(Frame):
             self.data = self.table["file"]
             subprocess.call("cd ..", shell = True)
             '''Generate New Widgets After File Processing'''
-            self.qaApprove = Button(self.control,command = self.qapp, text="Approve", bg='green',fg='white')
-            self.reqchange = Button(self.control, command = self. qdapp, text="Require Changes", bg='red',fg='white')
-            self.next = Button(self.nextb, text ="Next", bg = 'navy', fg = 'white',command = lambda x="next" : self.Change(x))
-            self.back = Button(self.nextb, text = "Back",bg='navy',fg = 'white',command = lambda x = "back" : self.Change(x))
-            self.isflag = Button(self.control,text = "Flag Frame",  bg = 'orange', fg = 'white',command=self.togflag)
-            self.isempty = Button(self.control,text="Mark as Empty",bg='purple',fg='white',command=self.togempty)
+            self.qaApprove = Button(self.control,command = self.qapp, text="Approve", bg='green',fg='white',height=1)
+            self.reqchange = Button(self.control, command = self. qdapp, text="Require Changes", bg='red',fg='white',height=1)
+            self.next = Button(self.nextb, text ="Next", bg = 'navy', fg = 'white',command = lambda x="next" : self.Change(x),height=1)
+            self.back = Button(self.nextb, text = "Back",bg='navy',fg = 'white',command = lambda x = "back" : self.Change(x),height=1)
+            self.isflag = Button(self.control,text = "Flag Frame",  bg = 'orange', fg = 'white',command=self.togflag,height=1)
+            self.isempty = Button(self.control,text="Mark as Empty",bg='purple',fg='white',command=self.togempty,height=1)
             '''fact panel building'''
             self.factpanel = ttk.Frame(self.navigate)
             self.factpanel['borderwidth'] = 2
@@ -256,55 +261,49 @@ class QA_GUI_tool(Frame):
         self.genLabeldata()
 
     def qapp(self):
-        os.chdir(os.path.dirname(os.getcwd()+"/data"))
-        frame = self.datahash[self.curr_image]
+        os.chdir(os.path.dirname(os.getcwd()))
+        print(os.path.dirname(os.getcwd()))
+        frame = self.data["frames"][self.token]
         frame["qaStatus"] = "approved"
-        self.datahash[self.curr_image] = frame
         self.data["frames"][self.token]=frame
-        with open("index.json","w") as edit:
-            json.dump(self.data,edit,sort_keys=True,indent=4)
         print('approved frame {0}'.format(self.datalist[self.token]))
         self.genLabeldata()
 
     def qdapp(self):
-        os.chdir(os.path.dirname(os.getcwd()+"/data"))
-        frame = self.datahash[self.curr_image]
+        os.chdir(os.path.dirname(os.getcwd()))
+        frame = self.data["frames"][self.token]
         frame["qaStatus"] = "changesRequested"
         self.data["frames"][self.token]=frame
-        self.datahash[self.curr_image] = frame
-        with open("index.json","w") as edit:
-            json.dump(self.data,edit,sort_keys=True,indent=4)
         print('change_requested for frame {0}'.format(self.datalist[self.token]))
         self.genLabeldata()
 
     def togflag(self):
-        os.chdir(os.path.dirname(os.getcwd()+"/data"))
-        frame = self.datahash[self.curr_image]
+        os.chdir(os.path.dirname(os.getcwd()))
+        frame = self.data["frames"][self.token]
         if frame['isFlagged'] == False:
             frame["isFlagged"] = True
         elif frame['isFlagged'] == True:
             frame["isFlagged"] = False
-        self.datahash[self.curr_image] = frame
         self.data["frames"][self.token]=frame
-        with open("index.json","w") as edit:
-            json.dump(self.data,edit,sort_keys=True,indent=4)
         print('toggled flag for frame {0}'.format(self.datalist[self.token]))
         self.genLabeldata()
 
 
     def togempty(self):
-        os.chdir(os.path.dirname(os.getcwd()+"/data"))
-        frame = self.datahash[self.curr_image]
+        os.chdir(os.path.dirname(os.getcwd()))
+        frame = self.data["frames"][self.token]
         if frame['isEmpty'] == False:
             frame["isEmpty"] = True
         elif frame['isEmpty'] == True:
             frame["isEmpty"] = False
-        self.datahash[self.curr_image] = frame
         self.data["frames"][self.token]=frame
-        with open("index.json","w") as edit:
-            json.dump(self.data,edit,sort_keys=True,indent=4)
         print('toggled empty for frame {0}'.format(self.datalist[self.token]))
         self.genLabeldata()
+
+    def save_changes(self):
+        with open("index.json","w") as edit:
+            json.dump(self.data,edit,sort_keys=True,indent=4)
+        print('changes saved')
 
 if __name__ == '__main__':
     root = Tk()
