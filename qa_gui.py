@@ -22,6 +22,7 @@ class QA_GUI_tool(Frame):
         self.master = master
         self.master.configure(bg='navy blue')
         master.title("FLIR QA Flagger")
+        master.iconbitmap("flir.ico")
         #master.iconbitmap('flam.ico')
         self.w = 1200 # width for the Tk root
         self.h = 1000# height for the Tk root
