@@ -2,11 +2,13 @@ import json
 import sys
 import os
 import cv2
+import time
 from tkinter import *
 from tkinter import ttk
 from threading import Thread
 import subprocess
 from tkinter import filedialog
+from tkinter import messagebox
 import queue
 import PIL.Image, PIL.ImageTk
 
@@ -40,6 +42,7 @@ class QA_GUI_tool(Frame):
         self.menubar["menu"] = self.menubar.menu
         self.menubar.menu.add_command(label="Select Directory",command =self.directory_select)
         self.menubar.menu.add_command(label="Save Changes",command =self.save_changes)
+        self.menubar.menu.add_command(label="Hotkeys",command=self.help)
 
         '''BUILD WIDGET'''
         self.menubar.pack(side=LEFT)
@@ -56,6 +59,9 @@ class QA_GUI_tool(Frame):
             number = "0"+number
         return number
 
+    def help(self):
+        answer = messagebox.showinfo(title = "Hotkeys", message ="LEFT and RIGHT arrow: Traverse Images"+'\n'+"Control+A: Approve"+ '\n' "Control+R: Require Changes" + '\n' + "Control+F: Toggle Flag Frame" + '\n' + "Control+M: Toggle Mark Empty")
+
     def progress(self):
         try:
             self.imagepanel.delete('all')
@@ -70,6 +76,7 @@ class QA_GUI_tool(Frame):
             self.dataset_id.destroy()
             self.factpanel.destroy()
             self.framelabel.destroy()
+            self.countlabel.destroy()
         except:
             print('first run no need to destroy')
         self.prog_bar = ttk.Progressbar(self.navigate,orient='horizontal',length=1000, mode="determinate")
@@ -129,7 +136,12 @@ class QA_GUI_tool(Frame):
         qaStatus = self.Check_status('qaStatus')
         flagStatus = self.Check_status('isFlagged')
         emptyStatus = self.Check_status('isEmpty')
-        self.framelabel.config(text = self.curr_image)
+        self.framelabel.configure(state="normal")
+        self.framelabel.delete('1.0',END)
+        self.framelabel.tag_configure("center",justify='center')
+        self.framelabel.insert(1.0,self.curr_image,'center')
+        self.framelabel.configure(state="disabled")
+        self.countlabel.config(text="{0}/{1} image".format(self.token+1,self.datalength))
         if qaStatus == 'approved':
             self.QaLabel.config(text = 'QA Status: {0}'.format(qaStatus),bg = 'green')
         elif qaStatus == 'changesRequested':
@@ -164,29 +176,33 @@ class QA_GUI_tool(Frame):
             self.reqchange = Button(self.control, command = self. qdapp, text="Require Changes", bg='red',fg='white',height=1)
             self.next = Button(self.nextb, text ="Next", bg = 'navy', fg = 'white',command = lambda x="next" : self.Change(x),height=1)
             self.back = Button(self.nextb, text = "Back",bg='navy',fg = 'white',command = lambda x = "back" : self.Change(x),height=1)
+            self.master.bind("<Left>",self.back_key)
+            self.master.bind("<Right>",self.next_key)
             self.isflag = Button(self.control,text = "Flag Frame",  bg = 'orange', fg = 'white',command=self.togflag,height=1)
             self.isempty = Button(self.control,text="Mark as Empty",bg='purple',fg='white',command=self.togempty,height=1)
             '''fact panel building'''
             self.factpanel = ttk.Frame(self.navigate)
             self.factpanel['borderwidth'] = 2
             self.factpanel['relief'] = 'sunken'
-            self.framelabel = Label(self.navigate)
+            self.framelabel = Text(self.navigate,height=1,borderwidth=0)
+            self.countlabel = Label(self.nextb)
             self.QaLabel = Label(self.factpanel)
             self.FlagLabel = Label(self.factpanel)
             self.EmptyLabel= Label(self.factpanel)
-            self.framelabel.pack(side=TOP,pady=5,padx=5)
             self.QaLabel.pack(side=TOP,pady=5,padx=5)
             self.FlagLabel.pack(side=TOP,pady=5,padx=5)
             self.EmptyLabel.pack(side=TOP,pady=5,padx=5)
             self.factpanel.pack(side=BOTTOM)
+            self.countlabel.pack(side=TOP,pady=(0,10))
             self.framelabel.pack(side=TOP,pady=(0,10),padx=5)
+
             '''QA BUTTON'''
             self.qaApprove.pack(side=LEFT)
             self.reqchange.pack(side=LEFT)
             self.isflag.pack(side=LEFT)
             self.isempty.pack(side=LEFT)
-            self.next.pack(side=RIGHT,padx=50,pady=20,ipady=5)
-            self.back.pack(side=LEFT,padx=50,pady=20,ipady=5)
+            self.next.pack(side=RIGHT,padx=50,pady=(0,10),ipady=5,ipadx=5)
+            self.back.pack(side=LEFT,padx=50,pady=(0,10),ipady=5,ipadx=5)
             self.dataset_label = Label(self.blank,text = "Dataset Name: "+self.datasetName)
             self.dataset_id = Label(self.blank,text="Dataset ID: "+self.datasetID)
             self.dataset_label.pack(side=TOP,pady=15)
@@ -205,10 +221,14 @@ class QA_GUI_tool(Frame):
             if annotation["source"]["type"] == "human":
                 image = cv2.rectangle(image, (annotation["boundingBox"]["x"],annotation["boundingBox"]["y"]), (annotation["boundingBox"]["x"] + annotation["boundingBox"]["w"],annotation["boundingBox"]["y"]+annotation["boundingBox"]["h"]),(0,255,0),1)
 
-        if dimensions[1] > 800:
+        if dimensions[1] > 800 and dimensions[1] <= 1360:
             return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB),(int(dimensions[1]/2),int(dimensions[0]/2)),interpolation =cv2.INTER_AREA)
         elif dimensions[1] > 680 and dimensions[1] <= 800:
             return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB),(int(3*dimensions[1]/4),int(3*dimensions[0]/4)),interpolation =cv2.INTER_AREA)
+        elif dimensions[1] >1360 and dimensions[1]<=2720:
+            return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB),(int(dimensions[1]/4),int(dimensions[0]/4)),interpolation =cv2.INTER_AREA)
+        elif dimensions[1] >2720:
+            return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB),(int(dimensions[1]/8),int(dimensions[0]/8)),interpolation =cv2.INTER_AREA)
         else:
             return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -305,6 +325,12 @@ class QA_GUI_tool(Frame):
         with open("index.json","w") as edit:
             json.dump(self.data,edit,sort_keys=True,indent=4)
         print('changes saved')
+
+    def next_key(self,event):
+        self.Change("next")
+
+    def back_key(self,event):
+        self.Change("back")
 
 if __name__ == '__main__':
     root = Tk()
