@@ -60,9 +60,9 @@ class QA_GUI_tool(Frame):
         return number
 
     def help(self):
-        answer = messagebox.showinfo(title = "Hotkeys", message ="LEFT and RIGHT arrow: Traverse Images"+'\n'+"Control+A: Approve"+ '\n' "Control+R: Require Changes" + '\n' + "Control+F: Toggle Flag Frame" + '\n' + "Control+M: Toggle Mark Empty")
+        answer = messagebox.showinfo(title = "Hotkeys", message ="LEFT and RIGHT arrow: Next & Back"+'\n'+"Control+A: Approve"+ '\n' "Control+R: Require Changes" + '\n' + "Control+F: Toggle Flag Frame" + '\n' + "Control+M: Toggle Mark Empty" +'\n'+ "Control+S: Save"+'\n'+ "Control+H: Help")
 
-    def progress(self):
+    def clean(self):
         try:
             self.imagepanel.delete('all')
             self.prog_bar.destroy()
@@ -79,6 +79,9 @@ class QA_GUI_tool(Frame):
             self.countlabel.destroy()
         except:
             print('first run no need to destroy')
+
+    def progress(self):
+        self.clean()
         self.prog_bar = ttk.Progressbar(self.navigate,orient='horizontal',length=1000, mode="determinate")
         self.prog_bar.pack(side=BOTTOM,pady=20)
         self.prog_var = IntVar()
@@ -172,14 +175,20 @@ class QA_GUI_tool(Frame):
             self.data = self.table["file"]
             subprocess.call("cd ..", shell = True)
             '''Generate New Widgets After File Processing'''
-            self.qaApprove = Button(self.control,command = self.qapp, text="Approve", bg='green',fg='white',height=1)
+            self.qaApprove = Button(self.control,command = self.qapp, text="Approve Frame", bg='green',fg='white',height=1)
             self.reqchange = Button(self.control, command = self. qdapp, text="Require Changes", bg='red',fg='white',height=1)
             self.next = Button(self.nextb, text ="Next", bg = 'navy', fg = 'white',command = lambda x="next" : self.Change(x),height=1)
             self.back = Button(self.nextb, text = "Back",bg='navy',fg = 'white',command = lambda x = "back" : self.Change(x),height=1)
-            self.master.bind("<Left>",self.back_key)
-            self.master.bind("<Right>",self.next_key)
-            self.isflag = Button(self.control,text = "Flag Frame",  bg = 'orange', fg = 'white',command=self.togflag,height=1)
-            self.isempty = Button(self.control,text="Mark as Empty",bg='purple',fg='white',command=self.togempty,height=1)
+            self.isflag = Button(self.control,text = "Toggle Flagging",  bg = 'orange', fg = 'white',command=self.togflag,height=1)
+            self.isempty = Button(self.control,text="Toggle Empty",bg='purple',fg='white',command=self.togempty,height=1)
+            self.master.bind("<Left>",self.process_key)
+            self.master.bind("<Right>",self.process_key)
+            self.master.bind("<Control-a>",self.process_key)
+            self.master.bind("<Control-r>",self.process_key)
+            self.master.bind("<Control-s>",self.process_key)
+            self.master.bind("<Control-e>", self.process_key)
+            self.master.bind("<Control-f>",self.process_key)
+            self.master.bind("<Control-h>",self.process_key)
             '''fact panel building'''
             self.factpanel = ttk.Frame(self.navigate)
             self.factpanel['borderwidth'] = 2
@@ -326,11 +335,23 @@ class QA_GUI_tool(Frame):
             json.dump(self.data,edit,sort_keys=True,indent=4)
         print('changes saved')
 
-    def next_key(self,event):
-        self.Change("next")
-
-    def back_key(self,event):
-        self.Change("back")
+    def process_key(self,event):
+        if event.keysym == "Right":
+            self.Change("next")
+        elif event.keysym == "Left":
+            self.Change("back")
+        elif event.keysym == "a":
+            self.qapp()
+        elif event.keysym == "r":
+            self.qdapp()
+        elif event.keysym == "f":
+            self.togflag()
+        elif event.keysym == "e":
+            self.togempty()
+        elif event.keysym == "s":
+            self.save_changes()
+        elif event.keysym == "h":
+            self.help()
 
 if __name__ == '__main__':
     root = Tk()
