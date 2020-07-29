@@ -38,12 +38,11 @@ class QA_GUI_tool(Frame):
         self.nextb = ttk.Frame(self.master)
         self.prog_label = Label(self.navigate,text="")
         self.menubar = Menubutton(self.control,text= "File", bg = "navy blue", fg = 'white',height=1,width=6,relief=RAISED,highlightthickness=2)
-        self.menubar.menu = Menu(self.menubar,tearoff=2)
+        self.menubar.menu = Menu(self.menubar,tearoff=0)
         self.menubar["menu"] = self.menubar.menu
         self.menubar.menu.add_command(label="Select Directory",command =self.directory_select)
         self.menubar.menu.add_command(label="Save Changes",command =self.save_changes)
         self.menubar.menu.add_command(label="Hotkeys",command=self.help)
-
         '''BUILD WIDGET'''
         self.menubar.pack(side=LEFT)
         self.control.pack(side=TOP,fill=X)
@@ -210,12 +209,12 @@ class QA_GUI_tool(Frame):
             self.reqchange.pack(side=LEFT)
             self.isflag.pack(side=LEFT)
             self.isempty.pack(side=LEFT)
-            self.next.pack(side=RIGHT,padx=50,pady=(0,10),ipady=5,ipadx=5)
-            self.back.pack(side=LEFT,padx=50,pady=(0,10),ipady=5,ipadx=5)
-            self.dataset_label = Label(self.blank,text = "Dataset Name: "+self.datasetName)
-            self.dataset_id = Label(self.blank,text="Dataset ID: "+self.datasetID)
+            self.next.pack(side=RIGHT,padx=50,pady=(0,0),ipady=5,ipadx=5)
+            self.back.pack(side=LEFT,padx=50,pady=(0,0),ipady=5,ipadx=5)
+            self.dataset_label = Label(self.blank,text = self.datasetName,font='Helvetica 12 bold')
+            self.dataset_id = Label(self.blank,text= self.datasetID,font='Helvetica 12 bold')
             self.dataset_label.pack(side=TOP,pady=15)
-            self.dataset_id.pack(side=TOP,pady=5)
+            self.dataset_id.pack(side=TOP,pady=(0,5))
             self.Process_image()
             self.genLabeldata()
             '''hotkeys'''
