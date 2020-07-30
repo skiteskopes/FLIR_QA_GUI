@@ -13,7 +13,6 @@ from tkinter import filedialog
 from tkinter import messagebox
 import queue
 import PIL.Image, PIL.ImageTk
-import tkinter as tk
 
 def center_screen_finder(root,w,h):
     ws = root.winfo_screenwidth()
@@ -30,15 +29,15 @@ class QA_GUI_tool(Frame):
         master.iconbitmap("flir.ico")
         #master.iconbitmap('flam.ico')
         self.w = 1200 # width for the Tk root
-        self.h = 1100# height for the Tk root
+        self.h = 1000# height for the Tk root
         self.token = 0
         master.geometry(center_screen_finder(self.master,self.w,self.h))
         '''WIDGETS'''
-        self.control = tk.Frame(self.master)
-        self.navigate = tk.Frame(self.master)
+        self.control = ttk.Frame(self.master)
+        self.navigate = ttk.Frame(self.master)
         self.imagepanel = Canvas(self.master,width=612,height=512,bg='navy blue')
         self.blank = Canvas(self.master,width=1200,height=70)
-        self.nextb = tk.Frame(self.master)
+        self.nextb = ttk.Frame(self.master)
         self.prog_label = Label(self.navigate,text="")
         self.menubar = Menubutton(self.control,text= "File", bg = "navy blue", fg = 'white',height=1,width=6,relief=RAISED,highlightthickness=2)
         self.menubar.menu = Menu(self.menubar,tearoff=0)
@@ -62,7 +61,7 @@ class QA_GUI_tool(Frame):
         return number
 
     def help(self):
-        answer = messagebox.showinfo(title = "Hotkeys", message ="LEFT and RIGHT arrow: Next & Back"+'\n'+"Control+A: Approve"+ '\n' "Control+R: Require Changes" + '\n' + "Control+F: Toggle Flag Frame" + '\n' + "Control+M: Toggle Mark Empty" +'\n'+ "Control+S: Save"+'\n'+ "Control+H: Help")
+        answer = messagebox.showinfo(title = "Hotkeys", message ="LEFT and RIGHT arrow: Next & Back"+'\n'+"Control+A: Approve"+ '\n' "Control+R: Require Changes" + '\n' + "Control+F: Toggle Flag Frame" + '\n' + "Control+M: Toggle Mark Empty" +'\n'+ "Control+S: Save"+'\n'+ "Control+J: Jump"+'\n'+ "Control+H: Help")
 
     def clean(self):
         try:
@@ -74,6 +73,7 @@ class QA_GUI_tool(Frame):
             self.isempty.destroy()
             self.qaApprove.destroy()
             self.reqchange.destroy()
+            self.jump.destroy()
             self.dataset_label.destroy()
             self.dataset_id.destroy()
             self.factpanel.destroy()
@@ -91,7 +91,6 @@ class QA_GUI_tool(Frame):
         self.prog_val = 0
         self.prog_var.set(self.prog_val)
         self.prog_bar['variable'] = self.prog_var
-
 
     def directory_select(self):
         self.directory = filedialog.askdirectory()
@@ -165,7 +164,6 @@ class QA_GUI_tool(Frame):
         else:
             self.EmptyLabel.config(text= 'Empty Status: {0}'.format(emptyStatus),bg = 'purple',fg = 'white')
 
-
     def check_table(self):
         if self.qutable.empty() != True:
             self.datalength = self.table["datalength"]
@@ -184,6 +182,7 @@ class QA_GUI_tool(Frame):
             self.back = Button(self.nextb, text = "Back",bg='navy',fg = 'white',command = lambda x = "back" : self.Change(x),height=1)
             self.isflag = Button(self.control,text = "Toggle Flagging",  bg = 'orange', fg = 'white',command=self.togflag,height=1)
             self.isempty = Button(self.control,text="Toggle Empty",bg='purple',fg='white',command=self.togempty,height=1)
+            self.jump = Button(self.control,text = "Jump Frame", bg = 'steel blue',fg = 'white',command = self.frame_jump,height = 1)
             self.master.bind("<Left>",self.process_key)
             self.master.bind("<Right>",self.process_key)
             self.master.bind("<Control-a>",self.process_key)
@@ -192,6 +191,7 @@ class QA_GUI_tool(Frame):
             self.master.bind("<Control-e>", self.process_key)
             self.master.bind("<Control-f>",self.process_key)
             self.master.bind("<Control-h>",self.process_key)
+            self.master.bind("<Control-j>",self.process_key)
             '''fact panel building'''
             self.factpanel = ttk.Frame(self.navigate)
             self.factpanel['borderwidth'] = 2
@@ -209,6 +209,7 @@ class QA_GUI_tool(Frame):
             self.countlabel.pack(side=TOP,pady=(5,0))
             self.framelabel.pack(side=TOP)
             '''QA BUTTON'''
+            self.jump.pack(side=LEFT)
             self.qaApprove.pack(side=LEFT)
             self.reqchange.pack(side=LEFT)
             self.isflag.pack(side=LEFT)
@@ -232,18 +233,16 @@ class QA_GUI_tool(Frame):
         for annotation in current:
             if annotation["source"]["type"] == "human":
                 image = cv2.rectangle(image, (annotation["boundingBox"]["x"],annotation["boundingBox"]["y"]), (annotation["boundingBox"]["x"] + annotation["boundingBox"]["w"],annotation["boundingBox"]["y"]+annotation["boundingBox"]["h"]),(0,255,0),1)
+        resize = self.dimension_calculator(dimensions[1],dimensions[0])
+        return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB),(int(resize[0]),int(resize[1])),interpolation =cv2.INTER_AREA)
 
-        if dimensions[1] > 800 and dimensions[1] <= 1360:
-            return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB),(int(dimensions[1]/2),int(dimensions[0]/2)),interpolation =cv2.INTER_AREA)
-        elif dimensions[1] > 680 and dimensions[1] <= 800:
-            return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB),(int(3*dimensions[1]/4),int(3*dimensions[0]/4)),interpolation =cv2.INTER_AREA)
-        elif dimensions[1] >1360 and dimensions[1]<=2720:
-            return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB),(int(dimensions[1]/4),int(dimensions[0]/4)),interpolation =cv2.INTER_AREA)
-        elif dimensions[1] >2720:
-            return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB),(int(dimensions[1]/8),int(dimensions[0]/8)),interpolation =cv2.INTER_AREA)
+    def dimension_calculator(self,width,height):
+        self.standard = 525
+        if height > self.standard:
+            factor = height/self.standard
+            return width/factor,height/factor
         else:
-            return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
+            return width,height
 
     def load_json(self,directory):
         with open('index.json') as file:
@@ -319,7 +318,6 @@ class QA_GUI_tool(Frame):
         print('toggled flag for frame {0}'.format(self.datalist[self.token]))
         self.genLabeldata()
 
-
     def togempty(self):
         os.chdir(os.path.dirname(os.getcwd()))
         frame = self.data["frames"][self.token]
@@ -330,6 +328,20 @@ class QA_GUI_tool(Frame):
         self.data["frames"][self.token]=frame
         print('toggled empty for frame {0}'.format(self.datalist[self.token]))
         self.genLabeldata()
+
+    def frame_jump(self):
+        self.pop = Popup_Entry(self.master,self.datalength)
+        self.jump["state"] = "disabled"
+        self.master.wait_window(self.pop.entry_frame)
+        self.jump["state"] = "normal"
+        value = int(self.pop.value)
+        if value <= 0:
+            value = 1
+        elif value > self.datalength:
+            value = self.datalength
+        self.token = value - 1
+        self.Change("")
+
 
     def save_changes(self):
         self.savelabel.config(text="Saving Changes...")
@@ -345,8 +357,6 @@ class QA_GUI_tool(Frame):
         date_format="%H:%M:%S %Z%z"
         date = datetime.now(tz=pytz.utc)
         self.savelabel.config(text="Saved last at {0}".format(date.astimezone(timezone('US/Pacific')).strftime(date_format)))
-
-
 
     def process_key(self,event):
         if event.keysym == "Right":
@@ -365,6 +375,24 @@ class QA_GUI_tool(Frame):
             self.save_changes()
         elif event.keysym == "h":
             self.help()
+        elif event.keysym == "j":
+            self.frame_jump()
+
+class Popup_Entry(Frame):
+    def __init__(self,master,datalength):
+        self.entry_frame = Toplevel(master)
+        self.entry_frame.title("Jump")
+        self.entry_frame.geometry(center_screen_finder(self.entry_frame,200,100))
+        self.enter = Entry(self.entry_frame)
+        self.enterlabel= Label(self.entry_frame,text="Pick frame x with 1 <= x <= {0} :".format(datalength))
+        self.enterbutton= Button(self.entry_frame,text="OK",command = self.activate,bg="steel blue",fg='white')
+        self.enterlabel.pack(side=TOP,pady=5)
+        self.enter.pack(side=TOP,pady=5)
+        self.enterbutton.pack(side=TOP,pady=5)
+    def activate(self):
+        self.value = self.enter.get()
+        self.entry_frame.destroy()
+
 
 if __name__ == '__main__':
     root = Tk()
