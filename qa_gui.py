@@ -350,13 +350,16 @@ class QA_GUI_tool(Frame):
 
     def save_thread(self):
         os.chdir(self.directory)
-        subprocess.call("chmod 777 index.json",shell=True)
+        self.change_rights("index.json")
         with open("index.json","w+") as edit:
             json.dump(self.data,edit,sort_keys=True,indent=4)
         print('changes saved')
-        date_format="%H:%M:%S %Z%z"
+        date_format="%H:%M:%S %Z"
         date = datetime.now(tz=pytz.utc)
         self.savelabel.config(text="Saved last at {0}".format(date.astimezone(timezone('US/Pacific')).strftime(date_format)))
+
+    def change_rights(self,file):
+        subprocess.call("chmod 777 {0}".format(file),shell=True)
 
     def process_key(self,event):
         if event.keysym == "Right":
@@ -389,9 +392,13 @@ class Popup_Entry(Frame):
         self.enterlabel.pack(side=TOP,pady=5)
         self.enter.pack(side=TOP,pady=5)
         self.enterbutton.pack(side=TOP,pady=5)
+        self.entry_frame.bind("<Return>",self.process_key)
+        self.enter.focus_set()
     def activate(self):
         self.value = self.enter.get()
         self.entry_frame.destroy()
+    def process_key(self,event):
+        self.activate()
 
 
 if __name__ == '__main__':
