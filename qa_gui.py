@@ -330,7 +330,9 @@ class QA_GUI_tool(Frame):
         self.genLabeldata()
 
     def save_changes(self):
-        with open("index.json","w") as edit:
+        os.chdir(self.directory)
+        subprocess.call("chmod 777 index.json",shell=True)
+        with open("index.json","w+") as edit:
             json.dump(self.data,edit,sort_keys=True,indent=4)
         print('changes saved')
 
