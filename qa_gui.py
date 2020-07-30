@@ -2,7 +2,9 @@ import json
 import sys
 import os
 import cv2
-import time
+from datetime import datetime
+from pytz import timezone
+import pytz
 from tkinter import *
 from tkinter import ttk
 from threading import Thread
@@ -11,6 +13,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 import queue
 import PIL.Image, PIL.ImageTk
+import tkinter as tk
 
 def center_screen_finder(root,w,h):
     ws = root.winfo_screenwidth()
@@ -27,15 +30,15 @@ class QA_GUI_tool(Frame):
         master.iconbitmap("flir.ico")
         #master.iconbitmap('flam.ico')
         self.w = 1200 # width for the Tk root
-        self.h = 1000# height for the Tk root
+        self.h = 1100# height for the Tk root
         self.token = 0
         master.geometry(center_screen_finder(self.master,self.w,self.h))
         '''WIDGETS'''
-        self.control = ttk.Frame(self.master)
-        self.navigate = ttk.Frame(self.master)
+        self.control = tk.Frame(self.master)
+        self.navigate = tk.Frame(self.master)
         self.imagepanel = Canvas(self.master,width=612,height=512,bg='navy blue')
         self.blank = Canvas(self.master,width=1200,height=70)
-        self.nextb = ttk.Frame(self.master)
+        self.nextb = tk.Frame(self.master)
         self.prog_label = Label(self.navigate,text="")
         self.menubar = Menubutton(self.control,text= "File", bg = "navy blue", fg = 'white',height=1,width=6,relief=RAISED,highlightthickness=2)
         self.menubar.menu = Menu(self.menubar,tearoff=0)
@@ -76,6 +79,7 @@ class QA_GUI_tool(Frame):
             self.factpanel.destroy()
             self.framelabel.destroy()
             self.countlabel.destroy()
+            self.savelabel.destroy()
         except:
             print('first run no need to destroy')
 
@@ -145,21 +149,21 @@ class QA_GUI_tool(Frame):
         self.framelabel.configure(state="disabled")
         self.countlabel.config(text="{0}/{1} image".format(self.token+1,self.datalength))
         if qaStatus == 'approved':
-            self.QaLabel.config(text = 'QA Status: {0}'.format(qaStatus),bg = 'green')
+            self.QaLabel.config(text = 'QA Status: {0}'.format(qaStatus),bg = 'green', fg = 'white')
         elif qaStatus == 'changesRequested':
-            self.QaLabel.config(text = 'QA Status: {0}'.format(qaStatus),bg='red')
+            self.QaLabel.config(text = 'QA Status: {0}'.format(qaStatus),bg='red',fg= 'white')
         else:
-            self.QaLabel.config(text = 'QA Status: {0}'.format(qaStatus),bg='gray')
+            self.QaLabel.config(text = 'QA Status: {0}'.format(qaStatus),bg='gray',fg='black')
 
         if flagStatus == False:
-            self.FlagLabel.config(text= 'Flag Status: {0}'.format(flagStatus),bg = 'gray')
+            self.FlagLabel.config(text= 'Flag Status: {0}'.format(flagStatus),bg = 'gray',fg= 'black')
         else:
-            self.FlagLabel.config(text= 'Flag Status: {0}'.format(flagStatus),bg = 'orange')
+            self.FlagLabel.config(text= 'Flag Status: {0}'.format(flagStatus),bg = 'orange',fg= 'white')
 
         if emptyStatus == False:
-            self.EmptyLabel.config(text= 'Empty Status: {0}'.format(emptyStatus),bg = 'gray')
+            self.EmptyLabel.config(text= 'Empty Status: {0}'.format(emptyStatus),bg = 'gray',fg= 'black')
         else:
-            self.EmptyLabel.config(text= 'Empty Status: {0}'.format(emptyStatus),bg = 'purple')
+            self.EmptyLabel.config(text= 'Empty Status: {0}'.format(emptyStatus),bg = 'purple',fg = 'white')
 
 
     def check_table(self):
@@ -192,32 +196,32 @@ class QA_GUI_tool(Frame):
             self.factpanel = ttk.Frame(self.navigate)
             self.factpanel['borderwidth'] = 2
             self.factpanel['relief'] = 'sunken'
-            self.framelabel = Text(self.navigate,height=1,borderwidth=0)
+            self.framelabel = Text(self.navigate,height=1,borderwidth=2)
             self.countlabel = Label(self.nextb)
             self.QaLabel = Label(self.factpanel)
             self.FlagLabel = Label(self.factpanel)
             self.EmptyLabel= Label(self.factpanel)
+            self.savelabel = Label(self.control,fg='green')
             self.QaLabel.pack(side=TOP,pady=5,padx=5)
             self.FlagLabel.pack(side=TOP,pady=5,padx=5)
             self.EmptyLabel.pack(side=TOP,pady=5,padx=5)
             self.factpanel.pack(side=BOTTOM)
-            self.countlabel.pack(side=TOP,pady=(0,10))
-            self.framelabel.pack(side=TOP,pady=(0,10),padx=5)
-
+            self.countlabel.pack(side=TOP,pady=(5,0))
+            self.framelabel.pack(side=TOP)
             '''QA BUTTON'''
             self.qaApprove.pack(side=LEFT)
             self.reqchange.pack(side=LEFT)
             self.isflag.pack(side=LEFT)
             self.isempty.pack(side=LEFT)
-            self.next.pack(side=RIGHT,padx=50,pady=(0,0),ipady=5,ipadx=5)
-            self.back.pack(side=LEFT,padx=50,pady=(0,0),ipady=5,ipadx=5)
+            self.savelabel.pack(side=RIGHT,padx= 10)
+            self.next.pack(side=RIGHT,padx=50,pady=(5,5),ipady=5,ipadx=5)
+            self.back.pack(side=LEFT,padx=50,pady=(5,5),ipady=5,ipadx=5)
             self.dataset_label = Label(self.blank,text = self.datasetName,font='Helvetica 12 bold')
             self.dataset_id = Label(self.blank,text= self.datasetID,font='Helvetica 12 bold')
             self.dataset_label.pack(side=TOP,pady=15)
             self.dataset_id.pack(side=TOP,pady=(0,5))
             self.Process_image()
             self.genLabeldata()
-            '''hotkeys'''
         else:
             self.master.after(20,self.check_table)
 
@@ -277,13 +281,11 @@ class QA_GUI_tool(Frame):
                 self.token = 0
             else:
                 self.token += 1
-            print('traversing foward to frame {0}'.format(self.datalist[self.token]))
         elif string == "back":
             if self.token == 0:
                 self.token = self.datalength-1
             else:
                 self.token -= 1
-            print('traversing backwards to frame {0}'.format(self.datalist[self.token]))
         self.curr_image = self.datalist[self.token]
         self.imagepanel.delete('all')
         self.Process_image()
@@ -330,11 +332,21 @@ class QA_GUI_tool(Frame):
         self.genLabeldata()
 
     def save_changes(self):
+        self.savelabel.config(text="Saving Changes...")
+        self.sthread = Thread(target=self.save_thread)
+        self.sthread.start()
+
+    def save_thread(self):
         os.chdir(self.directory)
         subprocess.call("chmod 777 index.json",shell=True)
         with open("index.json","w+") as edit:
             json.dump(self.data,edit,sort_keys=True,indent=4)
         print('changes saved')
+        date_format="%H:%M:%S %Z%z"
+        date = datetime.now(tz=pytz.utc)
+        self.savelabel.config(text="Saved last at {0}".format(date.astimezone(timezone('US/Pacific')).strftime(date_format)))
+
+
 
     def process_key(self,event):
         if event.keysym == "Right":
